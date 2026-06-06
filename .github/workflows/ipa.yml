@@ -145,10 +145,20 @@ jobs:
         with:
           exclude_inputs: bundle_id,display_name,youpip,ytuhd,ryd,abconfig,youquality,youspeed,youmute,youloop,ytweaks,youslider,ytholdspeed,youchoose,youshare,gonerino,getcap,demc,ytshare,volboost
           
-      - name: Download and Validate IPA
-        run: |
-          wget "${{ inputs.ipa_url }}" --quiet --no-verbose -O youtube.ipa
+      - name: action-megacmd
+        if: ${{ startsWith(inputs.ipa_url, 'https://mega.nz/file/') }}
+        uses: Difegue/action-megacmd@1.4.0
 
+      - name: Download IPA from Mega share link
+        if: ${{ startsWith(inputs.ipa_url, 'https://mega.nz/file/') }}
+        run: mega-get "${{ inputs.ipa_url }}" youtube.ipa
+
+      - name: Download IPA from direct URL
+        if: ${{ !startsWith(inputs.ipa_url, 'https://mega.nz/file/') }}
+        run: wget "${{ inputs.ipa_url }}" --quiet --no-verbose -O youtube.ipa
+
+      - name: Validate IPA
+        run: |
           file_type=$(file --mime-type -b youtube.ipa)
 
           if [[ "$file_type" != "application/x-ios-app" && "$file_type" != "application/zip" ]]; then
