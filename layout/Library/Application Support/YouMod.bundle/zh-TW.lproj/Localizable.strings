@@ -176,6 +176,8 @@
 "HIDE_REMIX_BUTTON_DESC" = "Hide Remix button in the action bar under the video overlay.";
 "HIDE_SAVE_BUTTON" = "Hide Save button";
 "HIDE_SAVE_BUTTON_DESC" = "Hide Save button in the action bar under the video overlay.";
+"AUTO_CLOSE_PLAYLIST_POPUP" = "自動關閉 彈出的播放清單";
+"AUTO_CLOSE_PLAYLIST_POPUP_DESC" = "(需要重啟APP！)影片加入至播放清單後，自動關閉 彈出的播放清單。";
 
 "SHORTS" = "Shorts";
 "HIDE_SHORTS_LIKE_BUTTON" = "Hide Like button";

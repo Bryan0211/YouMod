@@ -119,6 +119,7 @@
 #define HideClipButton @"YouModHideClipButton"
 #define HideRemixButton @"YouModHideRemixButton"
 #define HideSaveButton @"YouModHideSaveButton"
+#define AutoClosePlaylistPopup @"YouModAutoClosePlaylistPopup"
 // Shorts
 #define HideShortsLikeButton @"YouModHideShortsLikeButton"
 #define HideShortsDisLikeButton @"YouModHideShortsDisLikeButton"

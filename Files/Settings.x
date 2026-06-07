@@ -401,7 +401,8 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
             BASIC_SWITCH(LOC(@"HIDE_CLIP_BUTTON"), LOC(@"HIDE_CLIP_BUTTON_DESC"), HideClipButton),
             BASIC_SWITCH(LOC(@"HIDE_REMIX_BUTTON"), LOC(@"HIDE_REMIX_BUTTON_DESC"), HideRemixButton),
             BASIC_SWITCH(LOC(@"HIDE_SAVE_BUTTON"), LOC(@"HIDE_SAVE_BUTTON_DESC"), HideSaveButton),
-        ];        
+            BASIC_SWITCH(LOC(@"AUTO_CLOSE_PLAYLIST_POPUP"), LOC(@"AUTO_CLOSE_PLAYLIST_POPUP_DESC"), AutoClosePlaylistPopup),
+        ];
         YTSettingsPickerViewController *picker = [[%c(YTSettingsPickerViewController) alloc] initWithNavTitle:LOC(@"PLAYER") pickerSectionTitle:nil rows:rows selectedItemIndex:0 parentResponder:[self parentResponder]];
         [settingsViewController pushViewController:picker];
         return YES;
@@ -626,6 +627,7 @@ static NSString *GetCacheSize() { // YTLite - @dayanch96
         OldQualityPicker: @YES,
         DownloadManager: @YES,
         DownloadSaveToPhotos: @YES,
+        AutoClosePlaylistPopup: @NO,
     }];
     %init;
 }

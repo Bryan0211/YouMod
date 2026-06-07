@@ -134,6 +134,138 @@ Class YTILikeResponseClass, YTIDislikeResponseClass, YTIRemoveLikeResponseClass;
 %end
 */
 
+static __weak id YouModActivePlaylistSheetController;
+static BOOL YouModPendingPlaylistSheet;
+static CFTimeInterval YouModPendingPlaylistSheetExpiresAt;
+
+static BOOL YouModIsSaveToPlaylistEntryIdentifier(NSString *identifier) {
+    return [identifier isEqualToString:@"3"] || [identifier isEqualToString:@"id.video.add_to.button"];
+}
+
+static BOOL YouModIdentifierLooksLikePlaylist(NSString *identifier) {
+    if (identifier.length == 0) return NO;
+    return [identifier rangeOfString:@"playlist" options:NSCaseInsensitiveSearch].location != NSNotFound;
+}
+
+static void YouModMarkPlaylistPopupPending(void) {
+    YouModPendingPlaylistSheet = YES;
+    YouModPendingPlaylistSheetExpiresAt = CFAbsoluteTimeGetCurrent() + 30.0;
+}
+
+static BOOL YouModShouldUsePendingPlaylistSheet(void) {
+    if (!YouModPendingPlaylistSheet) return NO;
+    if (CFAbsoluteTimeGetCurrent() <= YouModPendingPlaylistSheetExpiresAt) return YES;
+    YouModPendingPlaylistSheet = NO;
+    return NO;
+}
+
+static NSString *YouModSafeStringForKey(id object, NSString *key) {
+    @try {
+        id value = [object valueForKey:key];
+        return [value isKindOfClass:NSString.class] ? value : nil;
+    } @catch (__unused NSException *exception) {
+        return nil;
+    }
+}
+
+static BOOL YouModStringLooksLikePlaylistPopup(NSString *string) {
+    if (string.length == 0) return NO;
+    NSArray <NSString *> *needles = @[
+        @"playlist",
+        @"播放清單",
+        @"播放列表",
+        @"再生リスト",
+        @"재생목록"
+    ];
+    for (NSString *needle in needles) {
+        if ([string rangeOfString:needle options:NSCaseInsensitiveSearch].location != NSNotFound) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+static BOOL YouModActionLooksLikePlaylistPopupAction(YTActionSheetAction *action) {
+    NSString *identifier = YouModSafeStringForKey(action, @"_accessibilityIdentifier");
+    if (YouModIsSaveToPlaylistEntryIdentifier(identifier) || YouModIdentifierLooksLikePlaylist(identifier)) return YES;
+
+    UIButton *button = action.button;
+    NSString *buttonIdentifier = button.accessibilityIdentifier;
+    if (YouModIsSaveToPlaylistEntryIdentifier(buttonIdentifier) || YouModIdentifierLooksLikePlaylist(buttonIdentifier)) return YES;
+
+    return YouModStringLooksLikePlaylistPopup(button.accessibilityLabel)
+        || YouModStringLooksLikePlaylistPopup(button.currentTitle)
+        || YouModStringLooksLikePlaylistPopup(button.titleLabel.text);
+}
+
+static BOOL YouModIsSaveToPlaylistAction(YTActionSheetAction *action) {
+    NSString *identifier = YouModSafeStringForKey(action, @"_accessibilityIdentifier");
+    if (YouModIsSaveToPlaylistEntryIdentifier(identifier)) return YES;
+
+    UIButton *button = action.button;
+    return YouModIsSaveToPlaylistEntryIdentifier(button.accessibilityIdentifier);
+}
+
+static void YouModConfigurePlaylistPopupAction(YTActionSheetAction *action) {
+    action.shouldDismissOnAction = IS_ENABLED(AutoClosePlaylistPopup);
+}
+
+static void YouModWrapSaveToPlaylistHandler(YTActionSheetAction *action) {
+    id handler = action.handler;
+    if (!handler) return;
+
+    void (^originalHandler)(void) = [handler copy];
+    action.handler = ^{
+        YouModMarkPlaylistPopupPending();
+        originalHandler();
+    };
+}
+
+%hook YTDefaultSheetController
+- (void)addAction:(YTActionSheetAction *)action {
+    if (YouModIsSaveToPlaylistAction(action)) {
+        YouModWrapSaveToPlaylistHandler(action);
+    } else {
+        if (YouModActivePlaylistSheetController == self || YouModActionLooksLikePlaylistPopupAction(action)) {
+            YouModActivePlaylistSheetController = self;
+        } else if (YouModShouldUsePendingPlaylistSheet()) {
+            YouModPendingPlaylistSheet = NO;
+            YouModActivePlaylistSheetController = self;
+        }
+
+        if (YouModActivePlaylistSheetController == self) {
+            YouModConfigurePlaylistPopupAction(action);
+        }
+    }
+    %orig;
+}
+
+- (void)dealloc {
+    if (YouModActivePlaylistSheetController == self) {
+        YouModActivePlaylistSheetController = nil;
+    }
+    %orig;
+}
+%end
+
+%hook UIControl
+- (void)sendAction:(SEL)action to:(id)target forEvent:(UIEvent *)event {
+    if (YouModIsSaveToPlaylistEntryIdentifier(self.accessibilityIdentifier)) {
+        YouModMarkPlaylistPopupPending();
+    }
+    %orig;
+}
+%end
+
+%hook _ASDisplayView
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+    if (YouModIsSaveToPlaylistEntryIdentifier(self.accessibilityIdentifier)) {
+        YouModMarkPlaylistPopupPending();
+    }
+    %orig;
+}
+%end
+
 // YTSlientVote (https://github.com/PoomSmart/YTSilentVote)
 %group SlientVote
 %hook YTInnerTubeResponseWrapper
