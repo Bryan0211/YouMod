@@ -7,7 +7,7 @@
     NSString *cachePath = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES).firstObject;
     [[NSFileManager defaultManager] removeItemAtPath:cachePath error:nil];
 }
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+- (BOOL)application:(id)application didFinishLaunchingWithOptions:(id)launchOptions {
     BOOL result = %orig;
     if (IS_ENABLED(AutoClearCache)) {
         // Clear cache on app launch
